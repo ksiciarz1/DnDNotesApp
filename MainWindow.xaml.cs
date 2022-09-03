@@ -53,6 +53,12 @@ namespace DnDNotesApp
                 string element = GetElementByClass(responseBody, htmlClasses[i]);
                 monster[i] = GetElementValue(element);
             }
+
+            Monster monster1 = new Monster();
+            monster1.Name = monster[0];
+            monster1.Meta = monster[1];
+            monster1.SaveToFile();
+            Close();
         }
 
         private string GetElementByClass(string html, string elementClass)
