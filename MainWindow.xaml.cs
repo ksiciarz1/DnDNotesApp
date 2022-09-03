@@ -42,41 +42,17 @@ namespace DnDNotesApp
 
             string[] monster = new string[10];
 
-
+            // Start of monster stats
             int statBlockStart = responseBody.IndexOf("<div class=\"mon-stat-block\">");
             int StatBlockEnd = responseBody.IndexOf("<div class=\"more-info-content\">");
             responseBody = responseBody.Substring(statBlockStart, StatBlockEnd - statBlockStart);
 
-            for (int i = 0; i < htmlClasses.Length; i++)
+
+            for (int i = 0; i < 2; i++)
             {
-                int startIndex = responseBody.IndexOf($"class=\"{htmlClasses[i]}\"");
-
-                int dataStart = responseBody.IndexOf(">", startIndex) + 1;
-                int dataLength = responseBody.IndexOf("<", startIndex) - responseBody.IndexOf(">", startIndex) - 1;
-
-                string monsterData = responseBody.Substring(dataStart, dataLength);
-
-                //counting html elements inside
-                int elementStartCount = monsterData.Count((value) =>
-                {
-                    return value == '<';
-                });
-                int elementEndCount = monsterData.Count((value) =>
-                {
-                    return value == '>';
-                });
-
-                monsterData = GetDataFromHTML(monsterData);
-                monster[i] = monsterData;
+                string element = GetElementByClass(responseBody, htmlClasses[i]);
+                monster[i] = GetElementValue(element);
             }
-        }
-
-        private string GetDataFromHTML(string cutHTML)
-        {
-            string returnString = cutHTML;
-            returnString = returnString.Replace("\n", " ");
-            returnString = returnString.Trim();
-            return returnString;
         }
 
         private string GetElementByClass(string html, string elementClass)
@@ -85,22 +61,18 @@ namespace DnDNotesApp
 
             int indexOfClass = html.IndexOf(elementClass);
             int elementStart = html.Substring(0, indexOfClass).LastIndexOf('<');
-            int subElementCount = html.Substring(elementStart).Count((value) => { return value == '<'; });
+            string v = html.Substring(elementStart);
+            int elementEnd = v.IndexOf('>', v.IndexOf('>') + 1) + 1;
 
-            int elementEnd = elementStart;
-            for (int i = 0; i < subElementCount; i++)
-            {
-                elementEnd = html.Substring(elementEnd).IndexOf('<');
-            }
 
-            string finalElement = html.Substring(elementStart, elementEnd - elementStart);
+            string finalElement = html.Substring(elementStart, elementEnd);
             return finalElement;
         }
 
         private string GetElementValue(string element)
         {
             int valueStart = element.IndexOf('>') + 1;
-            int valueEnd = element.IndexOf('<');
+            int valueEnd = element.Substring(1).IndexOf('<');
             string value = element.Substring(valueStart, valueEnd - valueStart);
             value = value.Replace("\n", "");
             value = value.Trim();
