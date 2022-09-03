@@ -17,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml.Linq;
 
 namespace DnDNotesApp
 {
@@ -31,10 +32,12 @@ namespace DnDNotesApp
             GetHttpRequest();
         }
 
-        private async void GetHttpRequest(string http = "https://www.dndbeyond.com/monsters/16798-bandit")
+        private async void GetHttpRequest(string http = "https://www.dndbeyond.com/monsters/17011-shambling-mound")
         {
             string[] htmlClasses = {    "mon-stat-block__name-link", "mon-stat-block__meta","mon-stat-block__attribute-data-value",
-                                        "mon-stat-block__attribute-data-extra", "mon-stat-block__tidbit-data", "mon-stat-block__description-block-content" };
+                                        "mon-stat-block__attribute-data-extra", "mon-stat-block__tidbit-data", "mon-stat-block__description-block-content",
+                                        "ability-block__score", "ability-block__modifier" };
+
             HttpClient client = new HttpClient();
 
             string responseBody = "";
@@ -42,84 +45,76 @@ namespace DnDNotesApp
             try { responseBody = await client.GetStringAsync(http); }
             catch (HttpRequestException ex) { Console.WriteLine(ex.Message); }
 
-            string[] monster = new string[10];
-
             // Start of monster stats
             int statBlockStart = responseBody.IndexOf("<div class=\"mon-stat-block\">");
             int StatBlockEnd = responseBody.IndexOf("<div class=\"more-info-content\">");
             responseBody = responseBody.Substring(statBlockStart, StatBlockEnd - statBlockStart);
 
-            Monster monster1 = new Monster();
-
-            string element = GetElementByClass(responseBody, htmlClasses[0]);
-            monster1.Name = GetElementInnerText(element);
-            element = GetElementByClass(responseBody, htmlClasses[1]);
-            monster1.Meta = GetElementInnerText(element);
-
-            // Attributes
-            element = GetElementByClass(responseBody, htmlClasses[2]);
-            string armorClass = GetElementInnerText(element);
-            responseBody = responseBody.Replace(element, "");
-            element = GetElementByClass(responseBody, htmlClasses[3]);
-            responseBody = responseBody.Replace(element, "");
-            armorClass += " " + GetElementInnerText(element);
-            monster1.ArmorClass = armorClass;
-
-            element = GetElementByClass(responseBody, htmlClasses[2]);
-            string hitpoints = GetElementInnerText(element);
-            responseBody = responseBody.Replace(element, "");
-            element = GetElementByClass(responseBody, htmlClasses[3]);
-            responseBody = responseBody.Replace(element, "");
-            hitpoints += " " + GetElementInnerText(element);
-            monster1.HitPoints = hitpoints;
-
-            element = GetElementByClass(responseBody, htmlClasses[2]);
-            string speed = GetElementInnerText(element);
-            responseBody = responseBody.Replace(element, "");
-            monster1.Speed = speed;
-
-            // Stat Block
-            // Other
-            element = GetElementByClass(responseBody, htmlClasses[4]);
-            responseBody = responseBody.Replace(element, "");
-            monster1.Senses = GetElementInnerText(element);
-
-            element = GetElementByClass(responseBody, htmlClasses[4]);
-            responseBody = responseBody.Replace(element, "");
-            monster1.Languages = GetElementInnerText(element);
-
-            element = GetElementByClass(responseBody, htmlClasses[4]);
-            responseBody = responseBody.Replace(element, "");
-            monster1.Challange = GetElementInnerText(element);
-
-            // Actions
-            element = GetElementByClass(responseBody, htmlClasses[5]);
-            monster1.Actions = GetElementInnerText(element);
-
-            monster1.SaveToFile();
+            Monster monster = new Monster(responseBody);
             Close();
         }
 
 
         private string GetElementByClass(string html, string elementClass)
         {
-            // TODO: Make so that inner elements are included
             if (!html.Contains(elementClass)) return "";
 
+            string finalElement = "";
             int indexOfClass = html.IndexOf(elementClass);
             int elementStart = html.Substring(0, indexOfClass).LastIndexOf('<');
-            string v = html.Substring(elementStart);
-            int elementEnd = v.IndexOf('>', v.IndexOf('>') + 1) + 1;
+            if (html.Substring(elementStart + 1).IndexOf('<') == html.Substring(elementStart + 1).IndexOf("</"))
+            {
+                string v = html.Substring(elementStart);
+                int elementEnd = v.IndexOf('>', v.IndexOf('>') + 1) + 1;
+                finalElement = html.Substring(elementStart, elementEnd);
+            }
+            else
+            {
+                int subElementCount = 0;
+                string htmlElement = html.Substring(elementStart);
+                int elementEnd = 0;
+                bool locked = true;
+                htmlElement = htmlElement.Replace("</", "<|");
+                for (int i = 0; i < htmlElement.Length; i++)
+                {
+                    if (htmlElement[i] == '<')
+                    {
+                        subElementCount++;
+                    }
+                    if (htmlElement[i] == '|')
+                    {
+                        subElementCount -= 2;
+                    }
 
+                    if (subElementCount == 0 && !locked)
+                    {
+                        elementEnd += i - 1;
+                        break;
+                    }
+                    else if (locked) locked = false;
+                }
+                finalElement = html.Substring(elementStart, elementEnd);
 
-            string finalElement = html.Substring(elementStart, elementEnd);
+                finalElement = finalElement.Replace("<strong>", "**");
+                finalElement = finalElement.Replace("</strong>", "**");
+                finalElement = finalElement.Replace("|", "");
+                finalElement = finalElement.Replace("\n", "");
+                while (finalElement.Contains("<"))
+                {
+                    string firstString = finalElement.Substring(0, finalElement.IndexOf('<'));
+                    string secoundString = finalElement.Substring(finalElement.IndexOf('>') + 1);
+                    finalElement = firstString + secoundString;
+                }
+            }
+            finalElement = finalElement.Trim();
+            finalElement = finalElement.Replace(".**", ".**\n");
             return finalElement;
         }
 
         private string GetElementInnerText(string element)
         {
             int valueStart = element.IndexOf('>') + 1;
-            int valueEnd = element.Substring(1).IndexOf('<');
+            int valueEnd = element.Substring(1).IndexOf('<') + 1;
             string value = element.Substring(valueStart, valueEnd - valueStart);
             value = value.Replace("\n", "");
             value = value.Trim();
