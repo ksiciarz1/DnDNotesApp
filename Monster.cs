@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO.Packaging;
 using System.Linq;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace DnDNotesApp
 {
@@ -31,6 +33,8 @@ namespace DnDNotesApp
         public string? Challange { get; set; }
         public string? Proficency { get; set; }
 
+        public Dictionary<string, string> Attributes = new Dictionary<string, string>();
+
         // Actions   
         public string? Actions { get; set; }
 
@@ -39,12 +43,25 @@ namespace DnDNotesApp
                                             "ability-block__modifier", "mon-stat-block__tidbit-data", "mon-stat-block__description-block-content" };
         private int nowIndex = 0;
 
+        private string Class_Label = "mon-stat-block__attribute-label";
+
         public Monster() { }
+
+        public void CreateDoubleValueAttribute(string html, string htmlClass)
+        {
+            string key = GetDataByClass(html, Class_Label);
+            string value = $"{GetDataByClass(html, htmlClasses[2])} {GetDataByClass(html, htmlClasses[3])}";
+
+            Attributes.Add(key, value);
+        }
 
         public Monster(string html)
         {
             Name = GetDataByClass(html, htmlClasses[0]);
             Meta = GetDataByClass(html, htmlClasses[1]);
+
+            CreateDoubleValueAttribute(html, Class_Label);
+
             ArmorClass = $"{GetDataByClass(html, htmlClasses[2])} {GetDataByClass(html, htmlClasses[3])}";
             HitPoints = $"{GetDataByClass(html, htmlClasses[2])} {GetDataByClass(html, htmlClasses[3])}";
             Speed = GetDataByClass(html, htmlClasses[2]);
