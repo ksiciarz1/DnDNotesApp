@@ -66,7 +66,11 @@ namespace DnDNotesApp
         public void CreateDoubleValueAttribute(string html)
         {
             string key = GetDataByClass(html, attributeLabelClass);
-            string value = $"{GetDataByClass(html, attributeValueClass)} {GetDataByClass(html, attributeExtraClass)}";
+            string value = $"{GetDataByClass(html, attributeValueClass)} ";
+            if (html.IndexOf(attributeValueClass, nowIndex) > html.IndexOf(attributeExtraClass, nowIndex))
+            {
+                value += GetDataByClass(html, attributeExtraClass);
+            }
 
             stats.Add(key, value);
         }
