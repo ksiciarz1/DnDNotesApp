@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO.Packaging;
 using System.Linq;
 using System.Runtime.Intrinsics.Arm;
+using System.Security.Cryptography.Pkcs;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -28,66 +29,101 @@ namespace DnDNotesApp
         public string? Charisma { get; set; }
 
         // Additional
+        public string? Skills { get; set; }
+        public string? Resistances { get; set; }
+        public string? Immunities { get; set; }
+        public string? ConditionImunities { get; set; }
         public string? Senses { get; set; }
         public string? Languages { get; set; }
         public string? Challange { get; set; }
         public string? Proficency { get; set; }
 
-        public Dictionary<string, string> Attributes = new Dictionary<string, string>();
-
         // Actions   
         public string? Actions { get; set; }
 
-        private string[] htmlClasses = {    "mon-stat-block__name-link", "mon-stat-block__meta", "mon-stat-block__attribute-data-value",
-                                            "mon-stat-block__attribute-data-extra", "ability-block__score",
-                                            "ability-block__modifier", "mon-stat-block__tidbit-data", "mon-stat-block__description-block-content" };
-        private int nowIndex = 0;
 
-        private string Class_Label = "mon-stat-block__attribute-label";
+        // html classes
+        private const string nameClass = "mon-stat-block__name-link";
+        private const string metaClass = "mon-stat-block__meta";
+
+        private const string attributeLabelClass = "mon-stat-block__attribute-label";
+        private const string attributeValueClass = "mon-stat-block__attribute-data-value";
+        private const string attributeExtraClass = "mon-stat-block__attribute-data-extra";
+
+        private const string abilityScoreClass = "ability-block__score";
+        private const string abilityModifierClass = "ability-block__modifier";
+
+        private const string additionalLabelClass = "mon-stat-block__tidbit-label";
+        private const string additionalDataClass = "mon-stat-block__tidbit-data";
+
+        private const string actionsClass = "mon-stat-block__description-block-content";
+
+        private int nowIndex = 0;
+        private Dictionary<string, string> stats = new Dictionary<string, string>();
 
         public Monster() { }
 
-        public void CreateDoubleValueAttribute(string html, string htmlClass)
+        public void CreateDoubleValueAttribute(string html)
         {
-            string key = GetDataByClass(html, Class_Label);
-            string value = $"{GetDataByClass(html, htmlClasses[2])} {GetDataByClass(html, htmlClasses[3])}";
+            string key = GetDataByClass(html, attributeLabelClass);
+            string value = $"{GetDataByClass(html, attributeValueClass)} {GetDataByClass(html, attributeExtraClass)}";
 
-            Attributes.Add(key, value);
+            stats.Add(key, value);
         }
+
+        public void CreateDoubleValueAdditional(string html)
+        {
+            string key = GetDataByClass(html, additionalLabelClass);
+            string value = $"{GetDataByClass(html, additionalDataClass)}";
+
+            stats.Add(key, value);
+        }
+
+        public static void GetMonsterDataToFile(string html) => new Monster(html).SaveToFile();
+
 
         public Monster(string html)
         {
-            Name = GetDataByClass(html, htmlClasses[0]);
-            Meta = GetDataByClass(html, htmlClasses[1]);
+            Name = GetDataByClass(html, nameClass);
+            Meta = GetDataByClass(html, metaClass);
 
-            CreateDoubleValueAttribute(html, Class_Label);
+            while (html.IndexOf(attributeLabelClass, nowIndex) != -1)
+            {
+                CreateDoubleValueAttribute(html);
+            }
+            ArmorClass = stats["Armor Class"];
+            HitPoints = stats["Hit Points"];
+            Speed = stats["Speed"];
 
-            ArmorClass = $"{GetDataByClass(html, htmlClasses[2])} {GetDataByClass(html, htmlClasses[3])}";
-            HitPoints = $"{GetDataByClass(html, htmlClasses[2])} {GetDataByClass(html, htmlClasses[3])}";
-            Speed = GetDataByClass(html, htmlClasses[2]);
+            Strength = $"{GetDataByClass(html, abilityScoreClass)} {GetDataByClass(html, abilityModifierClass)}";
+            Dexterity = $"{GetDataByClass(html, abilityScoreClass)} {GetDataByClass(html, abilityModifierClass)}";
+            Constitution = $"{GetDataByClass(html, abilityScoreClass)} {GetDataByClass(html, abilityModifierClass)}";
+            Inteligance = $"{GetDataByClass(html, abilityScoreClass)} {GetDataByClass(html, abilityModifierClass)}";
+            Wisdom = $"{GetDataByClass(html, abilityScoreClass)} {GetDataByClass(html, abilityModifierClass)}";
+            Charisma = $"{GetDataByClass(html, abilityScoreClass)} {GetDataByClass(html, abilityModifierClass)}";
 
-            Strength = $"{GetDataByClass(html, htmlClasses[4])} {GetDataByClass(html, htmlClasses[5])}";
-            Dexterity = $"{GetDataByClass(html, htmlClasses[4])} {GetDataByClass(html, htmlClasses[5])}";
-            Constitution = $"{GetDataByClass(html, htmlClasses[4])} {GetDataByClass(html, htmlClasses[5])}";
-            Inteligance = $"{GetDataByClass(html, htmlClasses[4])} {GetDataByClass(html, htmlClasses[5])}";
-            Wisdom = $"{GetDataByClass(html, htmlClasses[4])} {GetDataByClass(html, htmlClasses[5])}";
-            Charisma = $"{GetDataByClass(html, htmlClasses[4])} {GetDataByClass(html, htmlClasses[5])}";
+            while (html.IndexOf(additionalLabelClass, nowIndex) != -1)
+            {
+                CreateDoubleValueAdditional(html);
+            }
+            Skills = stats.ContainsKey("Skills") ? stats["Skills"] : null;
+            Resistances = stats.ContainsKey("Damage Resistances") ? stats["Damage Resistances"] : null;
+            Immunities = stats.ContainsKey("Damage Immunities") ? stats["Damage Immunities"] : null;
+            ConditionImunities = stats.ContainsKey("Condition Immunities") ? stats["Condition Immunities"] : null;
+            Senses = stats.ContainsKey("Senses") ? stats["Senses"] : null;
+            Languages = stats.ContainsKey("Languages") ? stats["Languages"] : null;
+            Challange = stats.ContainsKey("Challenge") ? stats["Challenge"] : null;
+            Proficency = stats.ContainsKey("Proficency") ? stats["Proficency"] : null;
 
-            Senses = GetDataByClass(html, htmlClasses[6]);
-            Languages = GetDataByClass(html, htmlClasses[6]);
-            Challange = GetDataByClass(html, htmlClasses[6]);
-
-            Actions = GetElementByClass(html, htmlClasses[7]);
+            Actions = GetElementByClass(html, actionsClass);
 
             SaveToFile();
         }
 
         public void SaveToFile()
         {
-            // TODO: convert stats to ints
-
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.AppendLine($"## {Name}");                 // General
+            stringBuilder.AppendLine($"## {Name}");                     // General
             stringBuilder.AppendLine($"{Meta}");
             stringBuilder.AppendLine($"");
             stringBuilder.AppendLine($"---");
@@ -97,20 +133,41 @@ namespace DnDNotesApp
             stringBuilder.AppendLine($"**Speed:** {Speed}");
             stringBuilder.AppendLine($"**Challange:** {Challange}");
             stringBuilder.AppendLine($"");
-            stringBuilder.AppendLine($"STR|DEX|CON|INT|WIS|CHA");   // StatBlock
+            stringBuilder.AppendLine($"STR|DEX|CON|INT|WIS|CHA");       // StatBlock
             stringBuilder.AppendLine($"---|---|---|---|---|---");
             stringBuilder.AppendLine($"{Strength}|{Dexterity}|{Constitution}|{Inteligance}|{Wisdom}|{Charisma}");
             stringBuilder.AppendLine($"");
-            stringBuilder.AppendLine($"**Senses:** {Senses}");      // Additional
-            stringBuilder.AppendLine($"**Languages:** {Languages}");
-            stringBuilder.AppendLine($"**Proficency:** {Proficency}");
+            stringBuilder.AppendLine($"---");
+            stringBuilder.AppendLine($"");
+            stringBuilder.AppendLine($"#### Additional");               // Additional
+            if (Skills != null)
+                stringBuilder.AppendLine($"**Skills:** {Skills}");
+            if (Resistances != null)
+                stringBuilder.AppendLine($"**Damage Resistances:** {Resistances}");
+            if (Immunities != null)
+                stringBuilder.AppendLine($"**Damage Immunities:** {Immunities}");
+            if (ConditionImunities != null)
+                stringBuilder.AppendLine($"**Conditional Immunities:** {ConditionImunities}");
+            if (Senses != null)
+                stringBuilder.AppendLine($"**Senses:** {Senses}");
+            if (Languages != null)
+                stringBuilder.AppendLine($"**Languages:** {Languages}");
+            if (Proficency != null)
+                stringBuilder.AppendLine($"**Proficency:** {Proficency}");
+            stringBuilder.AppendLine($"");
+            stringBuilder.AppendLine($"---");
             stringBuilder.AppendLine($"");
             stringBuilder.AppendLine($"#### **Actions:**");              // Actions
             stringBuilder.AppendLine($"{Actions}");
 
-            System.IO.File.WriteAllText(@"MyNewTextFile.md", stringBuilder.ToString());
-            // TODO: Saving this to file in notes directory
+            if (Name != null)
+                System.IO.File.WriteAllText($"{Name}.md", stringBuilder.ToString());
+            else
+                System.IO.File.WriteAllText($"MyMonsterTextFile.md", stringBuilder.ToString());
         }
+
+
+        private string GetDataByClass(string html, string elementClass) => GetElementInnerText(GetElementByClass(html, elementClass));
 
         private string GetElementByClass(string html, string elementClass)
         {
@@ -174,17 +231,13 @@ namespace DnDNotesApp
         private string GetElementInnerText(string element)
         {
             if (element.Length == 0) return "";
+            if (!element.Contains('>')) return element;
             int valueStart = element.IndexOf('>') + 1;
             int valueEnd = element.Substring(1).IndexOf('<') + 1;
             string value = element.Substring(valueStart, valueEnd - valueStart);
             value = value.Replace("\n", "");
             value = value.Trim();
             return value;
-        }
-
-        private string GetDataByClass(string html, string elementClass)
-        {
-            return GetElementInnerText(GetElementByClass(html, elementClass));
         }
     }
 }
