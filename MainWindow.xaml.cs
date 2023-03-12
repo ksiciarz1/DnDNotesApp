@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -32,8 +33,9 @@ namespace DnDNotesApp
         {
             HttpClient client = new HttpClient();
             string responseBody = "";
-            if (!http.Contains("dandwiki"))
+            if (!http.Contains("dandwiki")) // Name was given
             {
+                http = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(http);
                 http = http.Trim().Replace(' ', '_');
                 http = $"https://www.dandwiki.com/wiki/5e_SRD:{http}";
             }
@@ -42,7 +44,7 @@ namespace DnDNotesApp
             try { responseBody = await client.GetStringAsync(http); }
             catch (HttpRequestException ex) { Console.WriteLine(ex.Message); }
 
-            // Start of monster stats
+            // Cut out content
             int statBlockStart = responseBody.IndexOf("mw-parser-output");
             int StatBlockEnd = responseBody.IndexOf("printfooter");
             responseBody = responseBody.Substring(statBlockStart, StatBlockEnd - statBlockStart);

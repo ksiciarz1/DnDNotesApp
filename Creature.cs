@@ -16,16 +16,16 @@ namespace DnDNotesApp
     internal class Creature
     {
         // Stats
-        private string name;
-        private string meta;
-        private string armorClass;
-        private string hitPoints;
-        private string speed;
+        private string? name;
+        private string? meta;
+        private string? armorClass;
+        private string? hitPoints;
+        private string? speed;
         private string[] stats = new string[6];
-        private string skills;
-        private string senses;
-        private string languages;
-        private string challenge;
+        private string? skills;
+        private string? senses;
+        private string? languages;
+        private string? challenge;
         private List<string> Abilities = new List<string>();
         private List<string> Actions = new List<string>();
 
@@ -36,7 +36,7 @@ namespace DnDNotesApp
 
         public Creature(string html)
         {
-            while (html.Contains('<'))
+            while (html.Contains('<')) // Removes html markup leaving only content
             {
                 int start = html.IndexOf('<');
                 int stop = html.IndexOf('>');
@@ -107,10 +107,10 @@ namespace DnDNotesApp
                     hitPoints = line.Substring("Hit Points".Length);
                 else if (line.Contains("Speed"))
                     speed = line.Substring("Speed".Length);
-
             }
         }
 
+        // For stat block only
         private void setStatUp(string line)
         {
             for (int i = 0; i < stats.Length; i++)
