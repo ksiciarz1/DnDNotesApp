@@ -16,9 +16,9 @@
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <TextBox x:Name="htmlTextBox" Margin="0,26,0,0" TextWrapping="Wrap" Text="" Grid.Column="1" Height="26" VerticalAlignment="Top" HorizontalAlignment="Center" Width="186"/>
-        <Label Content="DnD Beyond html: " HorizontalAlignment="Left" Margin="74,26,0,0" VerticalAlignment="Top" Width="122" HorizontalContentAlignment="Right"/>
-        <Button Content="Do a note" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Click="Button_Click_1" Height="23" Width="98"/>
-        <Button Content="Exit" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1" Click="Button_Click" Height="23" Width="98"/>
+        <Label Content="Creature Name / Wiki link: " HorizontalAlignment="Center" Margin="0,26,0,0" VerticalAlignment="Top" Width="186" HorizontalContentAlignment="Right"/>
+        <Button x:Name="DoANoteButton" Content="Do a note" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Click="DoANoteButtonClick" Height="23" Width="98"/>
+        <Button x:Name="ExitButton" Content="Exit" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1" Click="ExitButton_Click" Height="23" Width="98"/>
 
     </Grid>
 </Window>

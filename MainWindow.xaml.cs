@@ -32,27 +32,35 @@ namespace DnDNotesApp
         {
             HttpClient client = new HttpClient();
             string responseBody = "";
+            if (!http.Contains("dandwiki"))
+            {
+                http = http.Trim().Replace(' ', '_');
+                http = $"https://www.dandwiki.com/wiki/5e_SRD:{http}";
+            }
+
 
             try { responseBody = await client.GetStringAsync(http); }
             catch (HttpRequestException ex) { Console.WriteLine(ex.Message); }
 
             // Start of monster stats
-            int statBlockStart = responseBody.IndexOf("<div class=\"mon-stat-block\">");
-            int StatBlockEnd = responseBody.IndexOf("<div class=\"more-info-content\">");
+            int statBlockStart = responseBody.IndexOf("mw-parser-output");
+            int StatBlockEnd = responseBody.IndexOf("printfooter");
             responseBody = responseBody.Substring(statBlockStart, StatBlockEnd - statBlockStart);
+            responseBody = responseBody.Remove(0, responseBody.IndexOf('>') + 1);
+            responseBody = responseBody.Remove(responseBody.LastIndexOf('<'));
 
-            Monster.GetMonsterDataToFile(responseBody);
+            Creature.GetMonsterDataToFile(responseBody);
 
             htmlTextBox.Text = "";
             MessageBox.Show("Done !");
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
+        private void DoANoteButtonClick(object sender, RoutedEventArgs e)
         {
             if (htmlTextBox.Text != "" && htmlTextBox.Text != null)
                 GetMonsterDataFromHtml(htmlTextBox.Text);
